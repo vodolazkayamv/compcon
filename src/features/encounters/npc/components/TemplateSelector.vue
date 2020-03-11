@@ -51,7 +51,7 @@
               <cc-item-modal :item="f" />
             </v-col>
           </v-row>
-          <span class="heading">
+          <span v-if="e.OptionalFeatures.length" class="heading">
             <b class="primary--text">Optional</b>
             Features
           </span>
@@ -73,7 +73,7 @@ import { CompendiumStore } from '@/store'
 import { NpcFeature } from '@/class'
 
 export default Vue.extend({
-  name: 'npc-freature-selector',
+  name: 'npc-template-selector',
   props: {
     npc: {
       type: Object,

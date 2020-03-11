@@ -13,6 +13,10 @@
         </div>
         <v-divider />
         <div class="mx-12">
+          <v-btn outlined block color="info" class="my-1" @click="reload">
+            Download Updates and Reload
+          </v-btn>
+          <v-divider class="my-2" />
           <v-btn outlined block color="secondary" class="my-1" @click="bulkExport">
             Export All COMP/CON Data
           </v-btn>
@@ -24,6 +28,15 @@
             </template>
             <v-card>
               <v-card-text class="pa-6">
+                <p class="text-center heading h2 text--text">
+                  This will OVERWRITE
+                  <b class="primary--text">ALL</b>
+                  local COMP/CON data.
+                  <br />
+                  This
+                  <b class="primary--text">cannot</b>
+                  be undone.
+                </p>
                 <v-file-input
                   v-model="fileValue"
                   accept=".compcon"
@@ -77,9 +90,9 @@
               </v-card-text>
               <v-divider />
               <v-card-actions>
-                <v-btn color="secondary" flat large @click="deleteDialog = false">Dismiss</v-btn>
+                <v-btn color="secondary" text large @click="deleteDialog = false">Dismiss</v-btn>
                 <v-spacer />
-                <v-btn color="error" flat @click="deleteAll">
+                <v-btn color="error" text @click="deleteAll">
                   <v-icon left v-html="'mdi-alert'" />
                   Delete All User Data
                   <v-icon right v-html="'mdi-alert'" />
@@ -110,6 +123,10 @@
       <br />
       // FEATURE IN DEVELOPMENT //
     </p>
+
+    <div class="text-right">
+      <v-btn small text to="ui-test">UI Test</v-btn>
+    </div>
   </div>
 </template>
 
@@ -135,31 +152,32 @@ export default Vue.extend({
     },
   },
   methods: {
+    reload() {
+      location.reload(true)
+    },
     setUserID(id: string) {
       const store = getModule(CompendiumStore, this.$store)
       store.UserProfile.ID = id
     },
     async bulkExport() {
-      exportAll().then(res => {
-        saveFile(
-          `CC_${new Date().toISOString().slice(0, 10)}.compcon`,
-          res,
-          'Save COMP/CON Archive'
-        )
-      })
+      const result = await exportAll()
+      await saveFile(
+        `CC_${new Date().toISOString().slice(0, 10)}.compcon`,
+        JSON.stringify(result),
+        'Save COMP/CON Archive'
+      )
     },
     async bulkImport(file) {
-      importAll(file).then(() => {
-        this.importDialog = false
-      })
+      await importAll(file)
+      this.importDialog = false
     },
     async oldExport() {
-      exportV1Pilots().then(res => {
-        saveFile('CC_v1_pilots.json', res, 'Save COMP/CON v1.x Pilot Archive')
-      })
+      const res = await exportV1Pilots()
+      saveFile('CC_v1_pilots.json', res, 'Save COMP/CON v1.x Pilot Archive')
     },
     async deleteAll() {
-      clearAllData().then(() => (this.deleteDialog = false))
+      await clearAllData()
+      this.deleteDialog = false
     },
   },
 })

@@ -11,7 +11,7 @@
           <slot name="sidebar" />
         </v-list>
       </v-col>
-      <v-col :offset="cols" class="pl-7 mr-7">
+      <v-col :offset="cols" class="pl-7 mr-7 left-slot">
         <slot />
       </v-col>
     </v-row>
@@ -19,22 +19,16 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 
-export default Vue.extend({
-  name: 'cc-sidebar-view',
-  props: {
-    popup: {
-      type: Boolean,
-      required: false,
-    },
-    cols: {
-      type: [Number, String],
-      required: false,
-      default: '2',
-    },
-  },
-})
+@Component({ name: 'cc-sidebar-view' })
+export default class CCSidebarView extends Vue {
+  @Prop({ type: Boolean, required: false })
+  popup?: boolean
+
+  @Prop({ type: [Number, String], required: false, default: '2' })
+  cols: number | string
+}
 </script>
 
 <style scoped>

@@ -2,9 +2,7 @@
   <div class="mx-6">
     <v-row dense>
       <v-col>
-        <span class="heading mech" style="line-height: 15px">
-          {{ npc.Name }}
-        </span>
+        <span class="heading mech" style="line-height: 15px">{{ npc.Name }}</span>
         <span class="heading h2 light-text--text">
           <cc-slashes />
           {{ npc.Side }}
@@ -34,6 +32,7 @@
         <v-row justify="space-between" dense>
           <v-col cols="3">
             <cc-status-select
+              :key="npc.Statuses.length"
               label="Statuses"
               :items="statuses"
               :model="npc.Statuses"
@@ -44,6 +43,7 @@
           </v-col>
           <v-col cols="3">
             <cc-status-select
+              :key="npc.Conditions.length"
               label="Conditions"
               :items="conditions"
               :model="npc.Conditions"
@@ -54,6 +54,7 @@
           </v-col>
           <v-col cols="3">
             <cc-status-select
+              :key="npc.Resistances.length"
               label="Resistances"
               :items="resistances"
               :model="npc.Resistances"
@@ -120,7 +121,6 @@
               color="hp"
               rollover
               @update="npc.CurrentHP = $event"
-              @rollover="onHpRollover"
             >
               <span class="heading h3">HP: {{ npc.CurrentHP }}/{{ npc.MaxHP }}</span>
             </cc-tick-bar>
@@ -154,7 +154,6 @@
               rollover-negative
               clearable
               @update="npc.CurrentHeat = $event"
-              @rollover="onHeatRollover"
             >
               <span class="heading h3">HEAT: {{ npc.CurrentHeat }}/{{ npc.HeatCapacity }}</span>
             </cc-tick-bar>
@@ -229,7 +228,7 @@
             </v-row>
           </v-col>
           <v-col cols="auto">
-            <v-icon size="120" :color="npc.Class.Color">cci-size-{{ npc.Stats.Size }}</v-icon>
+            <v-icon size="120" :color="npc.Class.Color">{{ npc.SizeIcon }}</v-icon>
           </v-col>
         </v-row>
       </v-col>
@@ -248,33 +247,30 @@
       </v-col>
     </v-row>
     <v-divider class="my-3" />
-    <v-row dense>
-      <v-textarea
-        v-model="npc.Note"
-        label="GM Notes"
-        dense
-        auto-grow
-        rows="3"
-        outlined
-        hide-actions
-      />
-    </v-row>
-    <v-row v-if="npc.Reactions.length" dense justify="center">
+    <cc-title small :color="npc.Class.Color">
+      NPC Notes
+      <cc-text-editor label="Edit NPC Notes" :original="npc.Note" @save="npc.Note = $event" />
+    </cc-title>
+    <p v-html="npc.Note" />
+    <v-divider class="my-3" />
+    <v-row v-if="reactions.length" dense justify="center">
       <v-col cols="10">
         <div class="overline">STAGED REACTIONS</div>
-        <v-chip
-          v-for="(r, i) in npc.Reactions"
-          :key="r + i"
-          dark
-          color="action--reaction"
-          close
-          close-icon="mdi-close"
-          class="mx-1"
-          @click:close="npc.RemoveReaction(r)"
-        >
-          <v-icon left dark>mdi-redo-variant</v-icon>
-          <span class="heading h3">{{ r }}</span>
-        </v-chip>
+        <v-chip-group :key="'cr_' + reactions.length">
+          <v-chip
+            v-for="(r, i) in reactions"
+            :key="r + i"
+            dark
+            color="action--reaction"
+            close
+            close-icon="mdi-close"
+            class="mx-1"
+            @click:close="npc.RemoveReaction(r)"
+          >
+            <v-icon left dark>mdi-redo-variant</v-icon>
+            <span class="heading h3">{{ r }}</span>
+          </v-chip>
+        </v-chip-group>
       </v-col>
     </v-row>
     <v-row dense justify="start" class="mt-3 mb-10">
@@ -310,6 +306,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import sleep from '@/util/sleep'
 import { getModule } from 'vuex-module-decorators'
 import { CompendiumStore } from '@/store'
 
@@ -336,6 +333,7 @@ export default Vue.extend({
     ],
     structRolledOver: false,
     stressRolledOver: false,
+    npcSwitch: false,
   }),
   computed: {
     statuses() {
@@ -346,51 +344,30 @@ export default Vue.extend({
       const store = getModule(CompendiumStore, this.$store)
       return store.Statuses.filter(x => x.type === 'Condition')
     },
-  },
-  methods: {
-    onHpRollover() {
-      if (this.npc.MaxStructure === 1 || this.npc.CurrentStructure === 1) {
-        this.$nextTick(() => {
-          this.npc.CurrentHP = 0
-          this.npc.CurrentStructure = 0
-          this.npc.Destroyed = true
-        })
-        return
-      }
-      if (this.npc.CurrentStructure <= 1) {
-        this.$nextTick(() => {
-          this.npc.CurrentHP = 0
-        })
-      }
-      this.npc.CurrentStructure = this.npc.CurrentStructure - 1
-      if (this.npc.CurrentStructure < 0) this.npc.CurrentStructure = 0
-      this.structRolledOver = true
-      setTimeout(() => {
-        this.structRolledOver = false
-        this.$refs.structureTable.show()
-      }, 500)
+    reactions() {
+      return this.npc.Reactions
     },
-    onHeatRollover() {
-      if (this.npc.MaxStress === 1) {
-        this.$nextTick(() => {
-          this.npc.CurrentHeat = this.npc.HeatCapacity
-          this.npc.CurrentStress = 0
-          if (!this.npc.Statuses.some(x => x === 'Exposed')) this.npc.Statuses.push('Exposed')
-        })
-        return
-      }
-      if (this.npc.CurrentStress <= 1) {
-        this.$nextTick(() => {
-          this.npc.CurrentHeat = this.npc.HeatCapacity
-        })
-      }
-      this.npc.CurrentStress = this.npc.CurrentStress - 1
-      if (this.npc.CurrentStress < 0) this.npc.CurrentStress = 0
-      this.stressRolledOver = true
-      setTimeout(() => {
-        this.stressRolledOver = false
-        this.$refs.stressTable.show()
-      }, 500)
+  },
+  watch: {
+    'npc.CurrentStructure': {
+      async handler(newVal: number, oldVal: number) {
+        if (newVal < oldVal) {
+          this.structRolledOver = true
+          await sleep(500)
+          this.structRolledOver = false
+          if (this.npc.CurrentStructure > 0) this.$refs.structureTable.show()
+        }
+      },
+    },
+    'npc.CurrentStress': {
+      async handler(newVal: number, oldVal: number) {
+        if (newVal < oldVal) {
+          this.stressRolledOver = true
+          await sleep(500)
+          this.stressRolledOver = false
+          if (this.npc.CurrentStress > 0) this.$refs.stressTable.show()
+        }
+      },
     },
   },
 })

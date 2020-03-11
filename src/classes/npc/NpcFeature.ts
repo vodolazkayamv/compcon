@@ -1,3 +1,5 @@
+import { Tag } from '@/class'
+
 export enum NpcFeatureType {
   Trait = 'Trait',
   System = 'System',
@@ -19,6 +21,8 @@ export interface INpcFeatureData {
   locked: boolean
   effect?: string
   bonus?: object
+  override?: object
+  tags: ITagData[]
   brew: string
   type: NpcFeatureType
 }
@@ -29,7 +33,9 @@ export abstract class NpcFeature {
   private _origin: IOriginData
   private _effect: string
   private _bonus: object
+  private _override: object
   private _locked: boolean
+  private _tags: ITagData[]
   private _brew: string
   protected type: NpcFeatureType
 
@@ -39,7 +45,9 @@ export abstract class NpcFeature {
     this._origin = data.origin
     this._effect = data.effect || ''
     this._bonus = data.bonus || null
+    this._override = data.override || null
     this._locked = data.locked || false
+    this._tags = data.tags
     this._brew = data.brew || 'CORE'
   }
 
@@ -63,6 +71,10 @@ export abstract class NpcFeature {
 
   public get Bonus(): object {
     return this._bonus
+  }
+
+  public get Override(): object {
+    return this._override
   }
 
   public get Effect(): string {
@@ -97,6 +109,10 @@ export abstract class NpcFeature {
 
   public get IsLocked(): boolean {
     return this._locked
+  }
+
+  public get Tags(): Tag[] {
+    return Tag.Deserialize(this._tags)
   }
 
   public get FeatureType(): NpcFeatureType {
