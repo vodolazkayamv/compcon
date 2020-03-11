@@ -35,6 +35,7 @@ const themeDefaults = {
   repcap: '#8E8E8E',
   overcharge: '#F50057',
   corepower: '#00BFA5',
+  background: '#EDEDED',
 
   'action--move': '#C62828',
   'action--full': '#283593',
@@ -43,6 +44,8 @@ const themeDefaults = {
   'action--reaction': '#512DA8',
   'action--free': '#00695C',
   'action--downtime': '#37474F',
+  'action--protocol': '#007676',
+  'action--tech': '#802475',
 
   'damage--kinetic': '#757575',
   'damage--energy': '#29B6F6',
@@ -65,12 +68,12 @@ const themeDefaults = {
   'role--artillery': '#a64d79',
   'role--biological': '#7e52a3',
 
-  'npc-feature': '#cc0000',
-  'npc-trait': '#cc0000',
-  'npc-system': '#58b434',
-  'npc-weapon': '#212121',
-  'npc-tech': '#007674',
-  'npc-reaction': '#512DA8',
+  'npc--feature': '#991E2A',
+  'npc--trait': '#991E2A',
+  'npc--system': '#58b434',
+  'npc--weapon': '#212121',
+  'npc--tech': '#007674',
+  'npc--reaction': '#512DA8',
 
   enemy: '#C62828',
   ally: '#1661b8',
@@ -99,7 +102,7 @@ const theme: any = {
         ...themeDefaults,
         background: '#EDEDED',
 
-        'stark-panel': '#fff',
+        'stark-panel': '#EDEDED',
         'stark-text': '#000',
       },
       dark: {

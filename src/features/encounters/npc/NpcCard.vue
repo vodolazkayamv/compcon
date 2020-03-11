@@ -9,7 +9,7 @@
       <v-row dense class="mt-n6">
         <v-col cols="10">
           <span class="heading mech">
-            <cc-short-string-editor large @set="npc.Name = $event">
+            <cc-short-string-editor large :placeholder="npc.Name" @set="npc.Name = $event">
               <span
                 style="display:inline-block;  max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;"
               >
@@ -313,7 +313,11 @@
         </v-col>
       </v-row>
       <v-divider class="my-2" />
-      <v-textarea v-model="npc.Note" outlined label="GM Notes" auto-grow rows="2" />
+      <cc-title small :color="npc.Class.Color">
+        NPC Notes
+        <cc-text-editor label="Edit NPC Notes" :original="npc.Note" @save="npc.Note = $event" />
+      </cc-title>
+      <p v-html="npc.Note" />
       <v-dialog v-model="flavor_dialog" width="60vw">
         <v-card tile>
           <v-card-title :class="`heading h1 white--text ${npc.Class.Color}`">
@@ -356,7 +360,12 @@ import { NpcStore } from '@/store'
 
 export default Vue.extend({
   name: 'npc-card',
-  components: { EditableAttribute, FeatureSelector, TemplateSelector, SizeAttribute },
+  components: {
+    EditableAttribute,
+    FeatureSelector,
+    TemplateSelector,
+    SizeAttribute,
+  },
   props: {
     id: {
       type: String,

@@ -47,14 +47,15 @@
           />
         </v-col>
       </v-row>
-      <v-textarea
-        v-model="mission.Note"
-        outlined
-        label="GM Notes"
-        auto-grow
-        rows="2"
-        class="mt-n3"
-      />
+      <cc-title small class="mb-3">
+        Notes
+        <cc-text-editor
+          label="Edit Mission Notes"
+          :original="mission.Note"
+          @save="mission.Note = $event"
+        />
+      </cc-title>
+      <p v-html="mission.Note" />
       <cc-title small class="mt-3">
         ENCOUNTER STRUCTURE
       </cc-title>
@@ -219,6 +220,10 @@ export default Vue.extend({
       const store = getModule(MissionStore, this.$store)
       return store.Missions.find(x => x.ID === this.id)
     },
+  },
+  created() {
+    const store = getModule(MissionStore, this.$store)
+    store.Missions.forEach(m => m.ValidateSteps())
   },
   methods: {
     randomName() {

@@ -312,7 +312,11 @@
                 header="Attack Bonus"
                 :content="`+${mech.AttackBonus}`"
               />
-              <cc-active-card color="pilot" header="Tech Attack" :content="`+${mech.TechAttack}`" />
+              <cc-active-card
+                color="pilot"
+                header="Tech Attack"
+                :content="`${mech.TechAttack > 0 ? '+' : ''}${mech.TechAttack}`"
+              />
             </v-row>
             <v-row>
               <cc-active-card
@@ -326,7 +330,7 @@
             </v-row>
           </v-col>
           <v-col cols="auto">
-            <v-icon size="120" color="pilot">cci-size-{{ mech.Size }}</v-icon>
+            <v-icon size="120" color="pilot">{{ mech.SizeIcon }}</v-icon>
           </v-col>
         </v-row>
       </v-col>
@@ -347,17 +351,16 @@
       />
     </v-row>
     <v-divider class="my-2" />
-    <v-row dense>
-      <v-textarea
-        v-model="mech.GmNote"
-        label="GM Notes"
-        dense
-        auto-grow
-        rows="3"
-        outlined
-        hide-actions
+    <cc-title small color="pilot">
+      GM's Notes
+      <cc-text-editor
+        label="Edit Player Notes"
+        :original="mech.GmNote"
+        @save="mech.GmNote = $event"
       />
-    </v-row>
+    </cc-title>
+    <p v-html="mech.GmNote" />
+    <v-divider class="my-2" />
     <v-row v-if="mech.Reactions.length && !rest" dense justify="center">
       <v-col cols="10">
         <div class="overline">STAGED REACTIONS</div>
@@ -423,8 +426,8 @@ export default Vue.extend({
       required: true,
     },
     rest: {
-      type: Boolean
-    }
+      type: Boolean,
+    },
   },
   data: () => ({
     overcharge: [' +1 ', ' +1d3 ', ' +1d6 ', '+1d6+4'],

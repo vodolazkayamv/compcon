@@ -152,7 +152,6 @@
                 ]
                 <v-divider class="my-2" />
                 <v-row dense>
-                  <v-btn small text>DENY</v-btn>
                   <cc-btn small color="error" class="ml-auto" @click="mech.FullRepair()">
                     CONFIRM
                   </cc-btn>
@@ -287,13 +286,15 @@
         </v-col>
         <v-col>
           <v-row>
-            <cc-active-card color="frame" header="Speed" :content="mech.Speed" />
+            <cc-active-card prominent color="frame" header="Speed" :content="mech.Speed" />
             <cc-active-card
+              prominent
               color="frame"
               header="Attack Bonus"
               :content="`${mech.AttackBonus > 0 ? '+' : ''}${mech.AttackBonus}`"
             />
             <cc-active-card
+              prominent
               color="frame"
               header="Tech Attack"
               :content="`${mech.TechAttack > 0 ? '+' : ''}${mech.TechAttack}`"
@@ -301,17 +302,28 @@
           </v-row>
           <v-row>
             <cc-active-card
+              prominent
               color="frame"
               header="Evasion"
               :content="mech.IsStunned ? 5 : mech.Evasion"
             />
-            <cc-active-card color="frame" header="E-Defense" :content="mech.EDefense" />
-            <cc-active-card color="frame" header="Save Target" :content="mech.SaveTarget" />
-            <cc-active-card color="frame" header="Sensor Range" :content="mech.SensorRange" />
+            <cc-active-card prominent color="frame" header="E-Defense" :content="mech.EDefense" />
+            <cc-active-card
+              prominent
+              color="frame"
+              header="Save Target"
+              :content="mech.SaveTarget"
+            />
+            <cc-active-card
+              prominent
+              color="frame"
+              header="Sensor Range"
+              :content="mech.SensorRange"
+            />
           </v-row>
         </v-col>
         <v-col cols="auto">
-          <v-icon size="120" color="frame">cci-size-{{ mech.Size }}</v-icon>
+          <v-icon size="120" color="frame">{{ mech.SizeIcon }}</v-icon>
         </v-col>
       </v-row>
 
@@ -389,28 +401,6 @@ export default Vue.extend({
     structRolledOver: false,
     stressRolledOver: false,
   }),
-  watch: {
-    'mech.CurrentStructure': {
-      async handler(newVal: number, oldVal: number) {
-        if (newVal < oldVal) {
-          this.structRolledOver = true
-          await sleep(500)
-          this.structRolledOver = false
-          this.$refs.structureTable.show()
-        }
-      }
-    },
-    'mech.CurrentStress': {
-      async handler(newVal: number, oldVal: number) {
-        if (newVal < oldVal) {
-          this.stressRolledOver = true
-          await sleep(500)
-          this.stressRolledOver = false
-          this.$refs.stressTable.show()
-        }
-      }
-    }
-  },
   computed: {
     mech(): Mech {
       return this.pilot.ActiveMech || null
@@ -440,6 +430,28 @@ export default Vue.extend({
         return 'variable--damage'
       }
       return 'hp'
+    },
+  },
+  watch: {
+    'mech.CurrentStructure': {
+      async handler(newVal: number, oldVal: number) {
+        if (newVal < oldVal) {
+          this.structRolledOver = true
+          await sleep(500)
+          this.structRolledOver = false
+          this.$refs.structureTable.show()
+        }
+      },
+    },
+    'mech.CurrentStress': {
+      async handler(newVal: number, oldVal: number) {
+        if (newVal < oldVal) {
+          this.stressRolledOver = true
+          await sleep(500)
+          this.stressRolledOver = false
+          this.$refs.stressTable.show()
+        }
+      },
     },
   },
 })

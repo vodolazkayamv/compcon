@@ -1,5 +1,6 @@
 import { NpcClass } from './'
 import { store } from '@/store'
+import _ from 'lodash'
 
 export interface INpcStats {
   activations: number
@@ -19,10 +20,12 @@ export interface INpcStats {
   size: number
   structure?: number
   stress?: number
+  reactions?: string[]
 }
 
 export class NpcStats {
   private _stats: INpcStats
+  private _active: boolean
 
   public constructor(data: INpcStats) {
     this._stats = data
@@ -47,6 +50,7 @@ export class NpcStats {
       size: npcClass.Stats.Sizes(tier)[0],
       structure: npcClass.Stats.Structure(tier),
       stress: npcClass.Stats.Stress(tier),
+      reactions: ['Overwatch'],
     })
   }
 
@@ -69,6 +73,7 @@ export class NpcStats {
       size: max.Size,
       structure: max.Structure,
       stress: max.Stress,
+      reactions: ['Overwatch'],
     })
   }
 
@@ -90,10 +95,20 @@ export class NpcStats {
     this._stats.size = max.Stats.size
     this._stats.structure = max.Stats.structure
     this._stats.stress = max.Stats.stress
+    this._stats.reactions = ['Overwatch']
+  }
+
+  public get Active(): boolean {
+    return this._active
+  }
+
+  public set Active(val: boolean) {
+    this._active = val
   }
 
   private save(): void {
-    store.dispatch('npc/saveNpcData')
+    if (this.Active) store.dispatch('mission/saveActiveMissionData')
+    else store.dispatch('npc/saveNpcData')
   }
 
   public get Stats(): INpcStats {
@@ -251,29 +266,48 @@ export class NpcStats {
     this.save()
   }
 
+  public get Reactions(): string[] {
+    return this._stats.reactions
+  }
+
+  public AddReaction(r: string): void {
+    if (!this._stats.reactions.some(x => x === r)) {
+      this._stats.reactions.push(r)
+    }
+    this.save()
+  }
+
+  public RemoveReaction(r: string): void {
+    const idx = this._stats.reactions.findIndex(x => x === r)
+    if (idx > -1) this._stats.reactions.splice(idx, 1)
+    this.save()
+  }
+
   public static Serialize(item: NpcStats): INpcStats {
     return {
-      activations: item.Activations,
-      armor: item.Armor,
-      hp: item.HP,
-      evade: item.Evade,
-      edef: item.EDefense,
-      heatcap: item.HeatCapacity,
-      speed: item.Speed,
-      sensor: item.Sensor,
-      save: item.Save,
-      hull: item.Hull,
-      agility: item.Agility,
-      systems: item.Systems,
-      engineering: item.Engineering,
-      sizes: item.Sizes,
-      size: item.Size,
-      structure: item.Structure,
-      stress: item.Stress,
+      activations: item.Stats.activations,
+      armor: item.Stats.armor,
+      hp: item.Stats.hp,
+      evade: item.Stats.evade,
+      edef: item.Stats.edef,
+      heatcap: item.Stats.heatcap,
+      speed: item.Stats.speed,
+      sensor: item.Stats.sensor,
+      save: item.Stats.save,
+      hull: item.Stats.hull,
+      agility: item.Stats.agility,
+      systems: item.Stats.systems,
+      engineering: item.Stats.engineering,
+      sizes: item.Stats.sizes,
+      size: item.Stats.size,
+      structure: item.Stats.structure,
+      stress: item.Stats.stress,
+      reactions: item.Stats.reactions,
     }
   }
 
   public static Deserialize(data: INpcStats): NpcStats {
-    return new NpcStats(data)
+    if (!data.reactions) data.reactions = ['Overwatch']
+    return new NpcStats(_.clone(data))
   }
 }

@@ -14,6 +14,8 @@ import {
   Mech,
   CustomSkill,
   Organization,
+  CompendiumItem,
+  ContentPack,
 } from '@/class'
 import { rules } from 'lancer-data'
 import { store } from '@/store'
@@ -60,6 +62,7 @@ class Pilot {
   private _active_mech: string | null
 
   private cc_ver: string
+  private _brews: string[]
 
   public constructor() {
     this._id = uuid()
@@ -90,6 +93,7 @@ class Pilot {
     this._reserves = []
     this._orgs = []
     this.cc_ver = process.env.npm_package_version || 'UNKNOWN'
+    this._brews = []
     this.AddLoadout()
 
     // this._initCounters()
@@ -98,6 +102,31 @@ class Pilot {
   // -- Utility -----------------------------------------------------------------------------------
   private save(): void {
     store.dispatch('saveData')
+  }
+
+  public SetBrewData(): void {
+    const packs = store.getters.getItemCollection('ContentPacks') as ContentPack[]
+
+    function collectBrewGroup(items: CompendiumItem[]): string[] {
+      return items
+        .filter(x => x != null)
+        .map(i => i.Brew)
+        .filter(x => x.toLowerCase() !== 'core')
+    }
+
+    let brews = [] as string[]
+    this._loadouts.forEach(l => {
+      brews = _.union(brews, collectBrewGroup(l.Items))
+    })
+    this._mechs.forEach(m => {
+      brews = _.union(brews, collectBrewGroup([m.Frame]))
+      m.Loadouts.forEach(ml => {
+        brews = _.union(brews, collectBrewGroup(ml.Weapons))
+        brews = _.union(brews, collectBrewGroup(ml.Systems))
+      })
+    })
+    brews = brews.map(x => packs.find(y => y.ID === x)).map(z => `${z.Name} @ ${z.Version}`)
+    this._brews = brews
   }
 
   //TODO: don't extract id or type at call, just pass object and deal with it w/ instanceof/typeof
@@ -316,6 +345,7 @@ class Pilot {
   }
 
   public async CloudSave(): Promise<any> {
+    this.SetBrewData()
     if (!this.CloudOwnerID) {
       this.CloudOwnerID = store.getters.getUserProfile.ID
     }
@@ -333,8 +363,7 @@ class Pilot {
   public async CloudLoad(): Promise<any> {
     if (!this.CloudID) return Promise.reject('No Cloud ID')
     return gistApi.loadPilot(this.CloudID).then((gist: any) => {
-      const newPilotData = JSON.parse(gist.files['pilot.txt'].content) as IPilotData
-      this.setPilotData(newPilotData)
+      this.setPilotData(gist)
       this.LastCloudUpdate = new Date().toString()
     })
   }
@@ -635,10 +664,6 @@ class Pilot {
     return this.CurrentCBPoints === this.MaxCBPoints
   }
 
-  public get CBEligible(): boolean {
-    return this.Level % 3 === 0
-  }
-
   public AddCoreBonus(coreBonus: CoreBonus): void {
     this._core_bonuses.push(coreBonus)
     this.save()
@@ -844,7 +869,7 @@ class Pilot {
 
   public CloneLoadout(): void {
     const index = this._loadouts.findIndex(x => x.ID === this.ActiveLoadout.ID)
-    let newLoadout = PilotLoadout.Deserialize(PilotLoadout.Serialize(this.ActiveLoadout))
+    const newLoadout = PilotLoadout.Deserialize(PilotLoadout.Serialize(this.ActiveLoadout))
     newLoadout.RenewID()
     newLoadout.Name += ' (Copy)'
     this._loadouts.splice(index + 1, 0, newLoadout)
@@ -877,6 +902,7 @@ class Pilot {
     const clone = Mech.Deserialize(mechData, this)
     clone.RenewID()
     clone.Name += '*'
+    clone.IsActive = false
     this._mechs.push(clone)
     this.save()
   }
@@ -994,11 +1020,12 @@ class Pilot {
       cc_ver: p.cc_ver,
       counter_data: p.CounterSaveData,
       custom_counters: p.CustomCounterData,
+      brews: p._brews || [],
     }
   }
 
   public static Deserialize(pilotData: IPilotData): Pilot {
-    let p = new Pilot()
+    const p = new Pilot()
     p.setPilotData(pilotData)
     return p
   }
@@ -1026,16 +1053,16 @@ class Pilot {
     this._licenses = data.licenses.map((x: IRankedData) => PilotLicense.Deserialize(x))
     this._skills = data.skills.map((x: IRankedData) => PilotSkill.Deserialize(x))
     this._talents = data.talents.map((x: IRankedData) => PilotTalent.Deserialize(x))
-    this.CoreBonuses = data.core_bonuses.map((x: string) => CoreBonus.Deserialize(x))
+    this._core_bonuses = data.core_bonuses.map((x: string) => CoreBonus.Deserialize(x))
     this._loadouts = data.loadouts.length
       ? data.loadouts
           .filter(n => Boolean(n))
           .map((x: IPilotLoadoutData) => PilotLoadout.Deserialize(x))
       : [new PilotLoadout(0)]
-    this.Reserves = data.reserves
+    this._reserves = data.reserves
       ? data.reserves.map((x: IReserveData) => Reserve.Deserialize(x))
       : []
-    this.Organizations = data.orgs
+    this._orgs = data.orgs
       ? data.orgs.map((x: IOrganizationData) => Organization.Deserialize(x))
       : []
     this._active_loadout = data.active_loadout_index
@@ -1048,6 +1075,7 @@ class Pilot {
     this.cc_ver = data.cc_ver || ''
     this._counterSaveData = data.counter_data || []
     this._customCounters = (data.custom_counters as ICounterData[]) || []
+    this._brews = data.brews || []
   }
 }
 
